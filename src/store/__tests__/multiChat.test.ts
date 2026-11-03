@@ -233,6 +233,24 @@ describe('rename and delete', () => {
     expect(s.repo.chats.find((c) => c.id === a)?.title).toBe('n'.repeat(60));
   });
 
+  it('AC-16: renaming the open chat changes the title the header shows', async () => {
+    const s = setup();
+    const a = await sendInNewChat(s, 'original');
+    await s.store.dispatch(renameChat(a, 'Renamed'));
+    expect(selectActiveChat(s.store.getState())?.title).toBe('Renamed');
+  });
+
+  it('AC-18: a deleted chat stays gone after a restart', async () => {
+    const repo = new MemoryChatRepository();
+    const s = setup(repo);
+    const a = await sendInNewChat(s, 'A');
+    await sendInNewChat(s, 'B');
+    await s.store.dispatch(deleteChat(a));
+    const restarted = setup(repo);
+    await restarted.store.dispatch(loadChats());
+    expect(titles(restarted.store)).toEqual(['B']);
+  });
+
   it('AC-18: deleting removes the chat and its messages from state and the database', async () => {
     const s = setup();
     const a = await sendInNewChat(s, 'A');

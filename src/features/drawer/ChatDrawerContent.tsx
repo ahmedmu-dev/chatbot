@@ -1,11 +1,13 @@
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
-import { useCallback } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ChatSummary } from '@/db';
 import {
+  deleteChat,
   openChat,
+  renameChat,
   selectActiveChatId,
   selectChats,
   startNewChat,
@@ -15,6 +17,7 @@ import {
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { ChatRow } from './components/ChatRow';
+import { RenameDialog } from './components/RenameDialog';
 
 /** Drawer body: the New chat button, then the saved chats, newest first. */
 export function ChatDrawerContent({ navigation }: DrawerContentComponentProps) {
@@ -36,7 +39,43 @@ export function ChatDrawerContent({ navigation }: DrawerContentComponentProps) {
     [dispatch, navigation],
   );
 
-  const handleLongPress = useCallback((_chat: ChatSummary) => undefined, []);
+  const [renaming, setRenaming] = useState<ChatSummary | null>(null);
+
+  const confirmDelete = useCallback(
+    (chat: ChatSummary) => {
+      Alert.alert(
+        'Delete chat?',
+        `This deletes "${chat.title}" and all its messages. This can't be undone.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => void dispatch(deleteChat(chat.id)),
+          },
+        ],
+        { cancelable: true },
+      );
+    },
+    [dispatch],
+  );
+
+  /** AC-15: long-press menu. */
+  const handleLongPress = useCallback(
+    (chat: ChatSummary) => {
+      Alert.alert(
+        chat.title,
+        undefined,
+        [
+          { text: 'Rename', onPress: () => setRenaming(chat) },
+          { text: 'Delete', style: 'destructive', onPress: () => confirmDelete(chat) },
+          { text: 'Cancel', style: 'cancel' },
+        ],
+        { cancelable: true },
+      );
+    },
+    [confirmDelete],
+  );
 
   return (
     <View
@@ -74,6 +113,17 @@ export function ChatDrawerContent({ navigation }: DrawerContentComponentProps) {
           testID="drawer_list"
         />
       )}
+      {renaming ? (
+        <RenameDialog
+          key={renaming.id}
+          initialTitle={renaming.title}
+          onSave={(title) => {
+            void dispatch(renameChat(renaming.id, title));
+            setRenaming(null);
+          }}
+          onCancel={() => setRenaming(null)}
+        />
+      ) : null}
     </View>
   );
 }

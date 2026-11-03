@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
+import { Alert, type AlertButton } from 'react-native';
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -8,6 +9,7 @@ import {
   loadChats,
   makeStore,
   openChat,
+  selectChats,
   selectActiveChat,
   selectMessages,
   sendMessage,
@@ -166,5 +168,144 @@ describe('AC-10: New chat button', () => {
     await fireEvent.press(screen.getByTestId('drawer_new_chat_btn'));
     expect(selectActiveChat(s.store.getState())).toBeNull();
     expect(s.closeDrawer).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AC-15..AC-18: long-press menu, rename and delete', () => {
+  let alertSpy: jest.SpyInstance;
+  beforeEach(() => {
+    alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+
+  const lastAlert = () => {
+    const [title, message, buttons] = alertSpy.mock.calls.at(-1) as [
+      string,
+      string | undefined,
+      AlertButton[],
+    ];
+    return { title, message, buttons };
+  };
+  const choose = async (label: string) => {
+    const button = lastAlert().buttons.find((b) => b.text === label)!;
+    await act(async () => {
+      button.onPress?.();
+    });
+  };
+  const longPress = (id: string) => fireEvent(screen.getByTestId(`drawer_chat_${id}`), 'longPress');
+  const titlesOf = (s: Awaited<ReturnType<typeof setup>>) =>
+    selectChats(s.store.getState()).map((c) => c.title);
+
+  it('AC-15: long-press offers Rename, Delete and Cancel', async () => {
+    const s = await setup();
+    const a = await createChat(s, 'Chat A');
+    await longPress(a);
+    expect(lastAlert().buttons.map((b) => b.text)).toEqual(['Rename', 'Delete', 'Cancel']);
+    expect(lastAlert().buttons[1]?.style).toBe('destructive');
+    await choose('Cancel');
+    expect(titlesOf(s)).toEqual(['Chat A']);
+  });
+
+  it('AC-16: Rename opens a dialog prefilled with the title', async () => {
+    const s = await setup();
+    const a = await createChat(s, 'Chat A');
+    expect(screen.queryByTestId('drawer_rename_dialog')).not.toBeOnTheScreen();
+    await longPress(a);
+    await choose('Rename');
+    expect(screen.getByTestId('drawer_rename_input').props.value).toBe('Chat A');
+  });
+
+  it('AC-16: Save is disabled while the trimmed text is empty', async () => {
+    const s = await setup();
+    const a = await createChat(s, 'Chat A');
+    await longPress(a);
+    await choose('Rename');
+    const saveDisabled = () =>
+      screen.getByTestId('drawer_rename_save_btn').props.accessibilityState.disabled;
+    expect(saveDisabled()).toBe(false);
+    await fireEvent.changeText(screen.getByTestId('drawer_rename_input'), '   ');
+    expect(saveDisabled()).toBe(true);
+    await fireEvent.press(screen.getByTestId('drawer_rename_save_btn'));
+    expect(titlesOf(s)).toEqual(['Chat A']);
+    await fireEvent.changeText(screen.getByTestId('drawer_rename_input'), 'x');
+    expect(saveDisabled()).toBe(false);
+  });
+
+  it('AC-16: the input allows at most 60 characters', async () => {
+    const s = await setup();
+    const a = await createChat(s, 'Chat A');
+    await longPress(a);
+    await choose('Rename');
+    expect(screen.getByTestId('drawer_rename_input').props.maxLength).toBe(60);
+  });
+
+  it('AC-16: Save stores the trimmed title in the list, the header source and the database', async () => {
+    const s = await setup();
+    const a = await createChat(s, 'Chat A');
+    await createChat(s, 'Chat B');
+    await longPress(a);
+    await choose('Rename');
+    await fireEvent.changeText(screen.getByTestId('drawer_rename_input'), '  Holiday plans  ');
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('drawer_rename_save_btn'));
+    });
+    expect(screen.queryByTestId('drawer_rename_dialog')).not.toBeOnTheScreen();
+    expect(screen.getByTestId(`drawer_chat_${a}_title`)).toHaveTextContent('Holiday plans');
+    expect(s.repo.chats.find((c) => c.id === a)?.title).toBe('Holiday plans');
+    expect(titlesOf(s)).toEqual(['Chat B', 'Holiday plans']); // rename does not reorder
+  });
+
+  it('AC-16: Cancel changes nothing', async () => {
+    const s = await setup();
+    const a = await createChat(s, 'Chat A');
+    await longPress(a);
+    await choose('Rename');
+    await fireEvent.changeText(screen.getByTestId('drawer_rename_input'), 'Other');
+    await fireEvent.press(screen.getByTestId('drawer_rename_cancel_btn'));
+    expect(screen.queryByTestId('drawer_rename_dialog')).not.toBeOnTheScreen();
+    expect(titlesOf(s)).toEqual(['Chat A']);
+    expect(s.repo.chats[0]?.title).toBe('Chat A');
+  });
+
+  it('AC-17: Delete asks for confirmation with the exact copy; Cancel changes nothing', async () => {
+    const s = await setup();
+    const a = await createChat(s, 'Chat A');
+    await longPress(a);
+    await choose('Delete');
+    const { title, message, buttons } = lastAlert();
+    expect(title).toBe('Delete chat?');
+    expect(message).toBe('This deletes "Chat A" and all its messages. This can\'t be undone.');
+    expect(buttons.map((b) => [b.text, b.style])).toEqual([
+      ['Cancel', 'cancel'],
+      ['Delete', 'destructive'],
+    ]);
+    await choose('Cancel');
+    expect(titlesOf(s)).toEqual(['Chat A']);
+    expect(s.repo.chats).toHaveLength(1);
+  });
+
+  it('AC-18: confirming Delete removes the chat and its messages from the list and the database', async () => {
+    const s = await setup();
+    const a = await createChat(s, 'Chat A');
+    const b = await createChat(s, 'Chat B');
+    await longPress(a);
+    await choose('Delete');
+    await choose('Delete');
+    expect(screen.queryByTestId(`drawer_chat_${a}`)).not.toBeOnTheScreen();
+    expect(screen.getByTestId(`drawer_chat_${b}`)).toBeOnTheScreen();
+    expect(s.repo.chats.map((c) => c.id)).toEqual([b]);
+    expect(s.repo.messages.every((m) => m.chatId === b)).toBe(true);
+    expect(selectActiveChat(s.store.getState())?.id).toBe(b); // the open chat was not deleted
+  });
+
+  it('AC-18: deleting the open chat opens a new empty chat and shows the empty state', async () => {
+    const s = await setup();
+    const a = await createChat(s, 'Chat A');
+    expect(selectActiveChat(s.store.getState())?.id).toBe(a);
+    await longPress(a);
+    await choose('Delete');
+    await choose('Delete');
+    expect(selectActiveChat(s.store.getState())).toBeNull();
+    expect(selectMessages(s.store.getState())).toEqual([]);
+    expect(screen.getByText('No chats yet')).toBeOnTheScreen();
   });
 });
