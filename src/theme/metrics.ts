@@ -1,6 +1,6 @@
 export const spacing = { xs: 4, s: 8, m: 12, l: 16, xl: 24 } as const;
 
-export const radii = { bubble: 18, input: 22, button: 20 } as const;
+export const radii = { bubble: 18, input: 22, button: 20, code: 8 } as const;
 
 export const sizes = {
   headerHeight: 52,
