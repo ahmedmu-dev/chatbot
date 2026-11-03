@@ -71,7 +71,7 @@
       "/.maestro/"
     ],
     "transformIgnorePatterns": [
-      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|react-native-markdown-display))",
+      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|react-native-markdown-display|@reduxjs/toolkit|immer|redux|redux-thunk|reselect|react-redux))",
       "/node_modules/react-native-reanimated/plugin/",
       "/node_modules/@react-native/babel-preset/"
     ],
