@@ -30,7 +30,7 @@ export function MessageBubble({ message, onLongPress, onRetry }: Props) {
         )}
       </Pressable>
       {message.status === 'error' ? (
-        <View style={styles.errorRow}>
+        <View style={styles.errorRow} testID="chat_error">
           <Text style={styles.errorText} testID="chat_error_text">
             {message.errorMessage}
           </Text>

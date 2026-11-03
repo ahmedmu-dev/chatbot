@@ -42,6 +42,24 @@ describe('AC-7a: LLM_PROVIDER=fake', () => {
     expect(res.body.error.code).toBe(code);
   });
 
+  it('[fail-once:<code>] fails the first time that exact text is sent, then succeeds', async () => {
+    const text = 'retry me [fail-once:rate_limit]';
+    const first = await post([{ role: 'user', content: text }]);
+    expect(first.status).toBe(429);
+    expect(first.body.error.code).toBe('rate_limit');
+    const second = await post([{ role: 'user', content: text }]);
+    expect(second.status).toBe(200);
+    expect(second.body.content).toContain(`You said: ${text}`);
+    const other = await post([{ role: 'user', content: 'different [fail-once:rate_limit]' }]);
+    expect(other.status).toBe(429);
+  });
+
+  it('[fail:<code>] keeps failing on every attempt', async () => {
+    const msg = [{ role: 'user', content: 'x [fail:timeout]' }];
+    expect((await post(msg)).status).toBe(504);
+    expect((await post(msg)).status).toBe(504);
+  });
+
   it('ignores unknown fail codes', async () => {
     const res = await post([{ role: 'user', content: '[fail:bogus]' }]);
     expect(res.status).toBe(200);

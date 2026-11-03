@@ -11,7 +11,7 @@ export function AppHeader({ onNewChat }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="chat_header">
-      <Text style={styles.title} accessibilityRole="header" testID="chat_title">
+      <Text style={styles.title} accessibilityRole="header" testID="chat_header_title">
         Parley
       </Text>
       <Pressable
