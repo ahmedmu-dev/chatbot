@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Parley",
+    "slug": "parley",
+    "version": "1.0.0",
+    "scheme": "parley",
+    "orientation": "portrait",
+    "icon": "./assets/app/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.ahmedmu.parley",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.ahmedmu.parley",
+      "adaptiveIcon": {
+        "backgroundColor": "#4F46E5",
+        "foregroundImage": "./assets/app/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/app/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#4F46E5"
+        }
+      ],
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "backgroundColor": "#FFFFFF"
+  }
+}
