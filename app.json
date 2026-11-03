@@ -31,8 +31,7 @@
           "backgroundColor": "#4F46E5"
         }
       ],
-      "expo-asset",
-      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
