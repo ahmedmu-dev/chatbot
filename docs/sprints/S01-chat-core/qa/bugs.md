@@ -1,4 +1,4 @@
-## BUG-1  High  defect  (open)
+## BUG-1  High  defect  (FIXED 3df7845, verified on device)
 AC: AC-8, AC-5 (all send flows on device)   Commit: 8f45d13   Found by: device Samsung SM-S938W (R3CY509CB6D)
 Steps: release build with EXPO_PUBLIC_API_URL=http://192.168.1.22:8787, `LLM_PROVIDER=fake npm run server`, open app, send "hello parley".
 Expected: reply "You said: hello parley".
