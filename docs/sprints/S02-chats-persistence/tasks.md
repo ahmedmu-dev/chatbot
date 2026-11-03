@@ -13,4 +13,4 @@ Branch `feature/S02-chats-persistence` (from `main` after PR #1). Statuses: todo
 | QA-2 | Maestro flows: multi-chat persistence across restart (AC-2), drawer switch + isolation, rename, delete, plus the S01 regression flows | qa | AC-2, AC-6 – AC-11, AC-15 – AC-19 | QA-1 | done |
 | BUG-1 | Test gap: no Jest test for the Drawer config in src/app/_layout.tsx (AC-12 back/swipe) (Low) | dev | AC-6, AC-12 | — | done |
 | QA | Sign-off | qa | all | every DEV / QA / BUG (incl. BUG-1) | done (9f595c0) |
-| SM | Open PR | lead | — | QA Sign-off | todo |
+| SM | Open PR | lead | — | QA Sign-off | done (PR #2) |
