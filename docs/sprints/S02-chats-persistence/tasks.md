@@ -10,6 +10,7 @@ Branch `feature/S02-chats-persistence` (from `main` after PR #1). Statuses: todo
 | DEV-4 | Drawer content: New chat button, chat list (FlatList, newest first, title / plain-text preview / absolute locale time, active highlight), empty state, open chat on tap | dev | AC-7, AC-8, AC-9, AC-10, AC-11 | DEV-3 | ready-for-test (024a29f) |
 | DEV-5 | Long-press menu (Rename / Delete / Cancel), rename dialog (prefilled, trimmed, non-empty, max 60), delete confirmation; deleting the open chat → new chat | dev | AC-15, AC-16, AC-17, AC-18 | DEV-4 | ready-for-test (d5ba2e5) |
 | QA-1 | Test plan + testID contract | qa | all | — | done |
-| QA-2 | Maestro flows: multi-chat persistence across restart (AC-2), drawer switch + isolation, rename, delete, plus the S01 regression flows | qa | AC-2, AC-6 – AC-11, AC-15 – AC-19 | QA-1 | todo |
-| QA | Sign-off | qa | all | every DEV / QA / BUG | todo |
+| QA-2 | Maestro flows: multi-chat persistence across restart (AC-2), drawer switch + isolation, rename, delete, plus the S01 regression flows | qa | AC-2, AC-6 – AC-11, AC-15 – AC-19 | QA-1 | done |
+| BUG-1 | Test gap: no Jest test for the Drawer config in src/app/_layout.tsx (AC-12 back/swipe) (Low) | dev | AC-6, AC-12 | — | todo |
+| QA | Sign-off | qa | all | every DEV / QA / BUG (incl. BUG-1) | todo |
 | SM | Open PR | lead | — | QA Sign-off | todo |
