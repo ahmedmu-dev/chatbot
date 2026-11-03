@@ -33,14 +33,14 @@ tags: [regression]
 - tapOn:
     id: drawer_menu_rename
 - eraseText: 60
-- inputText: Groceries list
+- inputText: Shopping notes
 - hideKeyboard
 - tapOn:
     id: rename_save_btn
-- assertVisible: "Groceries list"
+- assertVisible: "Shopping notes"
 - assertNotVisible: "rename me please"
 # AC-14: a later message does not change the renamed title
-- tapOn: "Groceries list"
+- tapOn: "Shopping notes"
 - extendedWaitUntil:
     visible:
       id: chat_input
@@ -51,9 +51,9 @@ tags: [regression]
       MSG: another message
 - assertVisible:
     id: chat_header_title
-    text: "Groceries list"
+    text: "Shopping notes"
 # the rename survives a restart
 - stopApp
 - launchApp
 - runFlow: ../subflows/open_drawer.yaml
-- assertVisible: "Groceries list"
+- assertVisible: "Shopping notes"
