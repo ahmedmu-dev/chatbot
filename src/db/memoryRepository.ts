@@ -12,6 +12,7 @@ export class MemoryChatRepository implements ChatRepository {
   initialized = false;
 
   async init(): Promise<void> {
+    if (this.initialized) return;
     this.initialized = true;
     this.messages = this.messages.map((m) =>
       m.status === 'pending'

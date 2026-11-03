@@ -72,13 +72,14 @@ export class SqliteChatRepository implements ChatRepository {
 
   constructor(private readonly name: string = DB_NAME) {}
 
+  /** Opens and prepares the database once; every method waits for it. */
   private db(): Promise<SQLite.SQLiteDatabase> {
-    this.dbPromise ??= SQLite.openDatabaseAsync(this.name);
+    this.dbPromise ??= this.open();
     return this.dbPromise;
   }
 
-  async init(): Promise<void> {
-    const db = await this.db();
+  private async open(): Promise<SQLite.SQLiteDatabase> {
+    const db = await SQLite.openDatabaseAsync(this.name);
     await db.execAsync(PRAGMAS_SQL);
     const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
     if ((row?.user_version ?? 0) < SCHEMA_VERSION) {
@@ -92,6 +93,11 @@ export class SqliteChatRepository implements ChatRepository {
       "UPDATE messages SET status = 'error', errorCode = 'unknown', errorMessage = ? WHERE status = 'pending'",
       [userMessageFor('unknown')],
     );
+    return db;
+  }
+
+  async init(): Promise<void> {
+    await this.db();
   }
 
   async listChats(): Promise<ChatSummary[]> {

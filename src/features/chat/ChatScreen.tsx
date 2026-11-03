@@ -4,11 +4,11 @@ import { FlatList, KeyboardAvoidingView, StyleSheet, Text, View } from 'react-na
 
 import { AppHeader } from '@/components/AppHeader';
 import {
-  newChat,
   retryMessage,
   selectIsSending,
   selectMessages,
   sendMessage,
+  startNewChat,
   useAppDispatch,
   useAppSelector,
   type Message,
@@ -50,7 +50,7 @@ export function ChatScreen() {
 
   return (
     <View style={styles.container} testID="chat_screen">
-      <AppHeader onNewChat={() => dispatch(newChat())} />
+      <AppHeader onNewChat={() => dispatch(startNewChat())} />
       <KeyboardAvoidingView
         // The app is edge-to-edge on Android, so the window does not resize: pad on both platforms.
         behavior="padding"

@@ -5,7 +5,8 @@ import { Provider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ChatError, type ChatProvider } from '@/providers';
-import { makeStore } from '@/store';
+import { MemoryChatRepository } from '@/db';
+import { makeStore, selectMessages } from '@/store';
 
 import { ChatScreen, COPIED_TOAST_MS } from '../ChatScreen';
 
@@ -20,7 +21,7 @@ type Send = jest.MockedFunction<ChatProvider['sendMessage']>;
 
 async function setup() {
   const sendMock: Send = jest.fn();
-  const store = makeStore({ sendMessage: sendMock });
+  const store = makeStore({ sendMessage: sendMock }, new MemoryChatRepository());
   await render(
     <Provider store={store}>
       <SafeAreaProvider initialMetrics={metrics}>
@@ -103,7 +104,7 @@ describe('AC-10 / AC-12: sending and layout', () => {
     await type('Question');
     await tapSend();
     await waitFor(() => expect(screen.getByText('Answer')).toBeOnTheScreen());
-    const [user, assistant] = store.getState().chat.messages;
+    const [user, assistant] = selectMessages(store.getState());
     const list = screen.getByTestId('chat_list');
     const rows = within(list).getAllByTestId(/^chat_message_/);
     expect(rows.map((r) => r.props.testID)).toEqual([
@@ -171,10 +172,10 @@ describe('AC-15: copy', () => {
     sendMock.mockResolvedValue('Assistant **text**');
     await type('My question');
     await tapSend();
-    await waitFor(() => expect(store.getState().chat.messages).toHaveLength(2));
+    await waitFor(() => expect(selectMessages(store.getState())).toHaveLength(2));
     jest.useFakeTimers();
     try {
-      const [user, assistant] = store.getState().chat.messages;
+      const [user, assistant] = selectMessages(store.getState());
       await fireEvent(screen.getByTestId(`chat_message_${user!.id}`), 'longPress');
       expect(Clipboard.setStringAsync).toHaveBeenLastCalledWith('My question');
       expect(screen.getByText('Copied')).toBeOnTheScreen();

@@ -1,16 +1,27 @@
 import { ChatError, type ChatProvider } from '@/providers';
 
-import { makeStore, newChat, retryMessage, sendMessage } from '../index';
+import { MemoryChatRepository } from '@/db';
+
+import {
+  makeStore,
+  retryMessage,
+  selectIsSending,
+  selectMessages,
+  sendMessage,
+  startNewChat,
+} from '../index';
 
 type Send = jest.MockedFunction<ChatProvider['sendMessage']>;
 
 function setup() {
   const sendMock: Send = jest.fn();
-  const store = makeStore({ sendMessage: sendMock });
-  return { store, sendMock };
+  const repo = new MemoryChatRepository();
+  const store = makeStore({ sendMessage: sendMock }, repo);
+  return { store, sendMock, repo };
 }
 
-const messagesOf = (store: ReturnType<typeof makeStore>) => store.getState().chat.messages;
+const messagesOf = (store: ReturnType<typeof makeStore>) => selectMessages(store.getState());
+const isSending = (store: ReturnType<typeof makeStore>) => selectIsSending(store.getState());
 const SYSTEM = 'You are a helpful assistant.';
 
 describe('Redux chat slice', () => {
@@ -22,14 +33,14 @@ describe('Redux chat slice', () => {
     expect(messagesOf(store)).toMatchObject([
       { role: 'user', content: 'hello', status: 'pending' },
     ]);
-    expect(store.getState().chat.inFlightId).not.toBeNull();
+    expect(isSending(store)).toBe(true);
     resolve('hi there');
     await done;
     expect(messagesOf(store)).toMatchObject([
       { role: 'user', content: 'hello', status: 'sent' },
       { role: 'assistant', content: 'hi there', status: 'sent' },
     ]);
-    expect(store.getState().chat.inFlightId).toBeNull();
+    expect(isSending(store)).toBe(false);
   });
 
   it('AC-20: the request has the system prompt, earlier sent messages oldest first, then the new one', async () => {
@@ -63,30 +74,35 @@ describe('Redux chat slice', () => {
     const { store, sendMock } = setup();
     sendMock.mockResolvedValue('ok');
     await store.dispatch(sendMessage('old question'));
-    store.dispatch(newChat());
+    store.dispatch(startNewChat());
     await store.dispatch(sendMessage('what did I just ask?'));
     expect(sendMock.mock.calls[1]![0]).toEqual([{ role: 'user', content: 'what did I just ask?' }]);
   });
 
-  it('AC-19: New chat clears the conversation', async () => {
+  it('S01 AC-19 (S02 AC-10): New chat shows an empty conversation; the old chat stays saved', async () => {
     const { store, sendMock } = setup();
     sendMock.mockResolvedValue('ok');
     await store.dispatch(sendMessage('hi'));
-    store.dispatch(newChat());
+    store.dispatch(startNewChat());
     expect(messagesOf(store)).toEqual([]);
-    expect(store.getState().chat.inFlightId).toBeNull();
+    expect(isSending(store)).toBe(false);
+    expect(store.getState().chat.chats).toHaveLength(1);
   });
 
-  it('AC-19: a reply that arrives after New chat is ignored', async () => {
+  it('S01 AC-19 (S02 AC-20): a reply that arrives after New chat lands in its own chat only', async () => {
     const { store, sendMock } = setup();
     let resolve: (text: string) => void = () => undefined;
     sendMock.mockReturnValue(new Promise((r) => (resolve = r)));
     const done = store.dispatch(sendMessage('hi'));
-    store.dispatch(newChat());
+    store.dispatch(startNewChat());
     resolve('late');
     await done;
     expect(messagesOf(store)).toEqual([]);
-    expect(store.getState().chat.inFlightId).toBeNull();
+    const [chat] = store.getState().chat.chats;
+    expect(store.getState().chat.messagesByChat[chat!.id]).toMatchObject([
+      { content: 'hi', status: 'sent' },
+      { content: 'late', status: 'sent' },
+    ]);
   });
 
   describe('AC-16: failure and retry', () => {
@@ -102,7 +118,7 @@ describe('Redux chat slice', () => {
           errorMessage: 'Too many requests. Wait a moment and try again.',
         }),
       ]);
-      expect(store.getState().chat.inFlightId).toBeNull();
+      expect(isSending(store)).toBe(false);
     });
 
     it('turns a non-ChatError rejection into the generic message', async () => {
@@ -161,6 +177,7 @@ describe('Redux chat slice', () => {
     sendMock.mockReturnValue(new Promise(() => undefined));
     store.dispatch(sendMessage('one'));
     await store.dispatch(sendMessage('two'));
+    await new Promise((r) => setTimeout(r, 0)); // let the first request reach the provider
     expect(sendMock).toHaveBeenCalledTimes(1);
     expect(messagesOf(store)).toHaveLength(1);
     const other = setup();

@@ -54,6 +54,9 @@ describe('SqliteChatRepository', () => {
 
   it('AC-1: creates the chat and first message in one transaction', async () => {
     const { db, repo } = setup(1);
+    await repo.init();
+    db.runAsync.mockClear();
+    db.withTransactionAsync.mockClear();
     await repo.createChatWithMessage(
       { id: 'c', title: 't', model: 'm', createdAt: 1, updatedAt: 1 },
       { id: 'x', chatId: 'c', role: 'user', content: 'hi', status: 'pending', createdAt: 1 },
@@ -67,6 +70,8 @@ describe('SqliteChatRepository', () => {
 
   it('AC-3: updateMessage writes only the given columns, clearing errors with null', async () => {
     const { db, repo } = setup(1);
+    await repo.init();
+    db.runAsync.mockClear();
     await repo.updateMessage('x', {
       status: 'pending',
       errorCode: undefined,
@@ -80,6 +85,8 @@ describe('SqliteChatRepository', () => {
 
   it('AC-18: deleteChat deletes only the chat row (messages cascade)', async () => {
     const { db, repo } = setup(1);
+    await repo.init();
+    db.runAsync.mockClear();
     await repo.deleteChat('c');
     expect(db.runAsync).toHaveBeenCalledWith('DELETE FROM chats WHERE id = ?', ['c']);
   });
