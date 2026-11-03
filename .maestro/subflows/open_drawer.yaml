@@ -1,0 +1,9 @@
+# Reusable: open the drawer with the header menu button.
+appId: ${APP_ID}
+---
+- tapOn:
+    id: drawer_menu_btn
+- extendedWaitUntil:
+    visible:
+      id: drawer_container
+    timeout: 10000

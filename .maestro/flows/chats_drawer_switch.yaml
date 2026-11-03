@@ -1,0 +1,68 @@
+appId: ${APP_ID}
+tags: [regression]
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 20000
+- runFlow:
+    file: ../subflows/send_and_wait.yaml
+    env:
+      MSG: first topic
+# AC-10: New chat from the header, then from the drawer
+- tapOn:
+    id: chat_new_chat_btn
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 10000
+- runFlow:
+    file: ../subflows/send_and_wait.yaml
+    env:
+      MSG: second topic
+# AC-7 / AC-11: newest first; both rows listed with a preview
+- runFlow: ../subflows/open_drawer.yaml
+- assertVisible: "first topic"
+- assertVisible: "second topic"
+# AC-9: tap a chat opens it, closes the drawer, shows its title
+- tapOn: "first topic"
+- extendedWaitUntil:
+    visible: "(?s).*You said: first topic.*"
+    timeout: 10000
+- assertNotVisible:
+    id: drawer_container
+- assertVisible:
+    id: chat_header_title
+    text: "first topic"
+- assertNotVisible: "You said: second topic"
+# AC-19: follow-up in the older chat does not include the other chat
+- runFlow:
+    file: ../subflows/send.yaml
+    env:
+      MSG: follow up
+- extendedWaitUntil:
+    visible: "(?s).*You said: follow up.*"
+    timeout: 20000
+# AC-11: the chat moves back to the top
+- runFlow: ../subflows/open_drawer.yaml
+- assertVisible: "follow up"
+# AC-10: New chat from the drawer
+- tapOn:
+    id: drawer_new_chat_btn
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 10000
+# AC-12 (Android only): back closes the drawer, app stays open
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - runFlow: ../subflows/open_drawer.yaml
+      - pressKey: back
+      - assertNotVisible:
+          id: drawer_container
+      - assertVisible:
+          id: chat_screen

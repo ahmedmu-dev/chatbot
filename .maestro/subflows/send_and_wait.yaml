@@ -1,0 +1,10 @@
+# Reusable: send ${MSG} and wait for the fake provider's echo.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: send.yaml
+    env:
+      MSG: ${MSG}
+- extendedWaitUntil:
+    visible: "(?s).*You said: ${MSG}.*"
+    timeout: 20000

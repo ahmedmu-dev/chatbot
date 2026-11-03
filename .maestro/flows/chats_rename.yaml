@@ -1,0 +1,59 @@
+appId: ${APP_ID}
+tags: [regression]
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 20000
+- runFlow:
+    file: ../subflows/send_and_wait.yaml
+    env:
+      MSG: rename me please
+- runFlow: ../subflows/open_drawer.yaml
+# AC-15: long-press menu
+- longPressOn: "rename me please"
+- assertVisible:
+    id: drawer_menu_rename
+- assertVisible:
+    id: drawer_menu_delete
+- assertVisible:
+    id: drawer_menu_cancel
+- tapOn:
+    id: drawer_menu_rename
+# AC-16: prefilled; empty disables Save; Cancel changes nothing
+- assertVisible:
+    id: rename_input
+    text: "rename me please"
+- tapOn:
+    id: rename_cancel_btn
+- assertVisible: "rename me please"
+- longPressOn: "rename me please"
+- tapOn:
+    id: drawer_menu_rename
+- eraseText: 60
+- inputText: Groceries list
+- hideKeyboard
+- tapOn:
+    id: rename_save_btn
+- assertVisible: "Groceries list"
+- assertNotVisible: "rename me please"
+# AC-14: a later message does not change the renamed title
+- tapOn: "Groceries list"
+- extendedWaitUntil:
+    visible:
+      id: chat_input
+    timeout: 10000
+- runFlow:
+    file: ../subflows/send_and_wait.yaml
+    env:
+      MSG: another message
+- assertVisible:
+    id: chat_header_title
+    text: "Groceries list"
+# the rename survives a restart
+- stopApp
+- launchApp
+- runFlow: ../subflows/open_drawer.yaml
+- assertVisible: "Groceries list"
