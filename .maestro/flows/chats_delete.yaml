@@ -18,7 +18,9 @@ tags: [regression]
     env:
       MSG: delete this one
 - runFlow: ../subflows/open_drawer.yaml
-- longPressOn: "delete this one"
+- longPressOn:
+    id: "drawer_chat_title_.*"
+    text: "delete this one"
 - tapOn:
     id: drawer_menu_delete
 # AC-17: confirmation copy; Cancel changes nothing
@@ -28,7 +30,9 @@ tags: [regression]
     id: delete_cancel_btn
 - assertVisible: "delete this one"
 # AC-18: confirm removes it; the open chat is replaced by a new empty chat
-- longPressOn: "delete this one"
+- longPressOn:
+    id: "drawer_chat_title_.*"
+    text: "delete this one"
 - tapOn:
     id: drawer_menu_delete
 - tapOn:

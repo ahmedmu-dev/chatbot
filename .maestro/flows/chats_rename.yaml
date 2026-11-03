@@ -13,7 +13,9 @@ tags: [regression]
       MSG: rename me please
 - runFlow: ../subflows/open_drawer.yaml
 # AC-15: long-press menu
-- longPressOn: "rename me please"
+- longPressOn:
+    id: "drawer_chat_title_.*"
+    text: "rename me please"
 - assertVisible:
     id: drawer_menu_rename
 - assertVisible:
@@ -29,7 +31,9 @@ tags: [regression]
 - tapOn:
     id: rename_cancel_btn
 - assertVisible: "rename me please"
-- longPressOn: "rename me please"
+- longPressOn:
+    id: "drawer_chat_title_.*"
+    text: "rename me please"
 - tapOn:
     id: drawer_menu_rename
 - eraseText: 60
@@ -38,9 +42,13 @@ tags: [regression]
 - tapOn:
     id: rename_save_btn
 - assertVisible: "Shopping notes"
-- assertNotVisible: "rename me please"
+- assertNotVisible:
+    id: "drawer_chat_title_.*"
+    text: "rename me please"
 # AC-14: a later message does not change the renamed title
-- tapOn: "Shopping notes"
+- tapOn:
+    id: "drawer_chat_title_.*"
+    text: "Shopping notes"
 - extendedWaitUntil:
     visible:
       id: chat_input
