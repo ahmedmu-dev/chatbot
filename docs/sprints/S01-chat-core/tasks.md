@@ -10,6 +10,7 @@ Branch `feature/S01-chat-core`. Statuses: todo · in-progress · ready-for-test 
 | DEV-4 | Redux store + chat slice: messages with status, send/retry thunks, history building (system prompt + sent messages, oldest first), New chat reset | dev | AC-16 (logic), AC-19, AC-20, AC-21, AC-22 | DEV-3 | ready-for-test (af73c6a) |
 | DEV-5 | Chat screen UI: message list (user right / assistant left), Markdown and code blocks, input bar with Send enable rules, typing indicator, auto-scroll, long-press copy + "Copied", inline error + Retry, offline handling, keyboard avoiding | dev | AC-10 – AC-18 | DEV-4 | ready-for-test (f4ab65c) |
 | QA-1 | Test plan + testID contract | qa | all | — | done |
-| QA-2 | Maestro flows for the core path (send / receive with `LLM_PROVIDER=fake`, follow-up context, error + Retry, New chat) | qa | AC-3, AC-10 – AC-12, AC-16, AC-19 – AC-22 | QA-1 | todo |
-| QA | Sign-off | qa | all | every DEV / QA / BUG | todo |
+| QA-2 | Maestro flows for the core path (send / receive with `LLM_PROVIDER=fake`, follow-up context, error + Retry, New chat) | qa | AC-3, AC-10 – AC-12, AC-16, AC-19 – AC-22 | QA-1 | done |
+| BUG-1 | Android release blocks cleartext http:// to the local proxy; all flows show offline (High) | dev | AC-8, AC-10 – AC-22 (device) | — | in-progress |
+| QA | Sign-off | qa | all | every DEV / QA / BUG (incl. BUG-1) | todo |
 | SM | Open PR | lead | — | QA Sign-off | todo |
