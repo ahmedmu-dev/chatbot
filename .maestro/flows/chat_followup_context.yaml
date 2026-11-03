@@ -1,0 +1,24 @@
+appId: ${APP_ID}
+tags: [regression]
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 20000
+- runFlow:
+    file: ../subflows/send.yaml
+    env:
+      MSG: first question
+- extendedWaitUntil:
+    visible: "(?s).*You said: first question.*"
+    timeout: 20000
+- runFlow:
+    file: ../subflows/send.yaml
+    env:
+      MSG: what did I just ask
+# AC-20 / AC-21: the second request carries the earlier question
+- extendedWaitUntil:
+    visible: "(?s).*You said: what did I just ask.*Earlier messages: 1.*first question.*"
+    timeout: 20000
