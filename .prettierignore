@@ -1,0 +1,14 @@
+node_modules/
+coverage/
+build/
+dist/
+ios/
+android/
+.expo/
+docs/
+.maestro/
+.claude/
+.github/
+scripts/
+package-lock.json
+*.md

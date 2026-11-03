@@ -1,0 +1,88 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(npx prettier *)",
+      "Bash(npx jest *)",
+      "Bash(npm run *)",
+      "Bash(npm test*)",
+      "Bash(yarn lint*)",
+      "Bash(yarn test*)",
+      "Bash(yarn typecheck*)",
+      "Bash(yarn run *)",
+      "Bash(pnpm run *)",
+      "Bash(pnpm test*)",
+      "Bash(bun run *)",
+      "Bash(maestro *)",
+      "Bash(adb *)",
+      "Bash(emulator -list-avds*)",
+      "Bash(xcrun simctl *)",
+      "Bash(xcodebuild *)",
+      "Bash(scripts/qa/*)",
+      "Bash(bash scripts/qa/*)",
+      "Bash(QA_PLATFORM=* scripts/qa/*)",
+      "Bash(QA_NO_BOOT=* scripts/qa/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch*)",
+      "Bash(git checkout*)",
+      "Bash(git switch*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git fetch*)",
+      "Bash(git pull*)",
+      "Bash(git merge origin/main*)",
+      "Bash(git rev-parse*)",
+      "Bash(git push -u origin feature/*)",
+      "Bash(git push origin feature/*)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr list*)",
+      "Bash(gh pr diff*)",
+      "Bash(gh pr checks*)",
+      "Bash(gh pr create*)",
+      "Bash(gh pr edit*)",
+      "Bash(gh api repos/*/pulls/*/comments*)"
+    ],
+    "deny": [
+      "Bash(gh pr merge*)",
+      "Bash(gh pr close*)",
+      "Bash(gh pr review*--approve*)",
+      "Bash(git push * main*)",
+      "Bash(git push * master*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(git rebase*)",
+      "Bash(git clean*)",
+      "Bash(xcrun simctl erase*)",
+      "Bash(xcrun simctl delete*)",
+      "Bash(npm publish*)",
+      "Bash(eas submit*)",
+      "Bash(eas build*)",
+      "Bash(eas update*)"
+    ]
+  },
+  "hooks": {
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/task-completed-gate.sh",
+            "args": [],
+            "timeout": 900,
+            "statusMessage": "Running quality gate"
+          }
+        ]
+      }
+    ]
+  }
+}
