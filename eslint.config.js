@@ -11,6 +11,7 @@ module.exports = defineConfig([
     'ios/*',
     'android/*',
     '.expo/*',
+    'expo-env.d.ts',
     'docs/*',
     'scripts/*',
     '.maestro/*',

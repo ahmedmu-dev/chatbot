@@ -39,4 +39,11 @@ describe('US-1 app config', () => {
     );
     expect(offenders.map((f) => path.relative(ROOT, f))).toEqual([]);
   });
+
+  it('BUG-1: Android allows cleartext HTTP so release builds can reach the dev proxy', () => {
+    const plugin = (appJson.expo.plugins as unknown[]).find(
+      (p) => Array.isArray(p) && p[0] === 'expo-build-properties',
+    ) as [string, { android: { usesCleartextTraffic: boolean } }] | undefined;
+    expect(plugin?.[1].android.usesCleartextTraffic).toBe(true);
+  });
 });
