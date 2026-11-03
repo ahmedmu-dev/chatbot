@@ -5,7 +5,8 @@ import { Provider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ChatError, type ChatProvider } from '@/providers';
-import { makeStore } from '@/store';
+import { MemoryChatRepository } from '@/db';
+import { makeStore, selectMessages } from '@/store';
 
 import { ChatScreen, COPIED_TOAST_MS } from '../ChatScreen';
 
@@ -20,7 +21,7 @@ type Send = jest.MockedFunction<ChatProvider['sendMessage']>;
 
 async function setup() {
   const sendMock: Send = jest.fn();
-  const store = makeStore({ sendMessage: sendMock });
+  const store = makeStore({ sendMessage: sendMock }, new MemoryChatRepository());
   await render(
     <Provider store={store}>
       <SafeAreaProvider initialMetrics={metrics}>
@@ -40,6 +41,9 @@ async function tapSend() {
 const sendEnabled = () =>
   screen.getByTestId('chat_send_btn').props.accessibilityState.disabled === false;
 
+/** A message bubble's text; the header may repeat it as the chat title. */
+const inList = (text: string) => within(screen.getByTestId('chat_list')).getByText(text);
+
 function never(): Promise<string> {
   return new Promise(() => undefined);
 }
@@ -47,7 +51,7 @@ function never(): Promise<string> {
 describe('AC-3: empty state', () => {
   it('shows the header, the "Ask anything" placeholder and no list', async () => {
     await setup();
-    expect(screen.getByText('Parley')).toBeOnTheScreen();
+    expect(screen.getByTestId('chat_header_title')).toHaveTextContent('New chat');
     expect(screen.getByText('Ask anything')).toBeOnTheScreen();
     expect(screen.queryByTestId('chat_list')).not.toBeOnTheScreen();
   });
@@ -82,7 +86,7 @@ describe('AC-10 / AC-12: sending and layout', () => {
     sendMock.mockReturnValue(never());
     await type('Hello there');
     await tapSend();
-    expect(screen.getByText('Hello there')).toBeOnTheScreen();
+    expect(inList('Hello there')).toBeOnTheScreen();
     expect(screen.getByTestId('chat_input').props.value).toBe('');
     expect(screen.getByTestId('chat_typing_indicator')).toBeOnTheScreen();
     expect(screen.queryByText('Ask anything')).not.toBeOnTheScreen();
@@ -103,7 +107,7 @@ describe('AC-10 / AC-12: sending and layout', () => {
     await type('Question');
     await tapSend();
     await waitFor(() => expect(screen.getByText('Answer')).toBeOnTheScreen());
-    const [user, assistant] = store.getState().chat.messages;
+    const [user, assistant] = selectMessages(store.getState());
     const list = screen.getByTestId('chat_list');
     const rows = within(list).getAllByTestId(/^chat_message_/);
     expect(rows.map((r) => r.props.testID)).toEqual([
@@ -145,7 +149,7 @@ describe('AC-13: Markdown', () => {
     sendMock.mockReturnValue(never());
     await type('**not bold**');
     await tapSend();
-    expect(screen.getByText('**not bold**')).toBeOnTheScreen();
+    expect(inList('**not bold**')).toBeOnTheScreen();
   });
 });
 
@@ -171,10 +175,10 @@ describe('AC-15: copy', () => {
     sendMock.mockResolvedValue('Assistant **text**');
     await type('My question');
     await tapSend();
-    await waitFor(() => expect(store.getState().chat.messages).toHaveLength(2));
+    await waitFor(() => expect(selectMessages(store.getState())).toHaveLength(2));
     jest.useFakeTimers();
     try {
-      const [user, assistant] = store.getState().chat.messages;
+      const [user, assistant] = selectMessages(store.getState());
       await fireEvent(screen.getByTestId(`chat_message_${user!.id}`), 'longPress');
       expect(Clipboard.setStringAsync).toHaveBeenLastCalledWith('My question');
       expect(screen.getByText('Copied')).toBeOnTheScreen();
@@ -197,7 +201,7 @@ describe('AC-16 / AC-17: errors and retry', () => {
     await type('Will fail');
     await tapSend();
     await waitFor(() => expect(screen.getByTestId('chat_error_text')).toBeOnTheScreen());
-    expect(screen.getByText('Will fail')).toBeOnTheScreen();
+    expect(inList('Will fail')).toBeOnTheScreen();
     expect(screen.getByText('Too many requests. Wait a moment and try again.')).toBeOnTheScreen();
     expect(screen.getByLabelText('Retry')).toBeOnTheScreen();
     expect(screen.queryByTestId('chat_typing_indicator')).not.toBeOnTheScreen();
@@ -218,7 +222,7 @@ describe('AC-16 / AC-17: errors and retry', () => {
     expect(screen.queryByTestId('chat_error_text')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('chat_retry_btn')).not.toBeOnTheScreen();
     expect(sendMock.mock.calls[1]![0]).toEqual(sendMock.mock.calls[0]![0]);
-    expect(screen.getAllByText('Try me')).toHaveLength(1);
+    expect(within(screen.getByTestId('chat_list')).getAllByText('Try me')).toHaveLength(1);
   });
 
   it('AC-17: when offline the app does not crash and shows the offline message', async () => {
@@ -231,7 +235,7 @@ describe('AC-16 / AC-17: errors and retry', () => {
         screen.getByText("You're offline. Check your connection and try again."),
       ).toBeOnTheScreen(),
     );
-    expect(screen.getByText('Anyone there?')).toBeOnTheScreen();
+    expect(inList('Anyone there?')).toBeOnTheScreen();
   });
 });
 
@@ -267,5 +271,33 @@ describe('AC-19 / AC-22: New chat', () => {
     await type('what did I just ask?');
     await tapSend();
     expect(sendMock.mock.calls[1]![0]).toEqual([{ role: 'user', content: 'what did I just ask?' }]);
+  });
+});
+
+describe('AC-9 / AC-13: header title', () => {
+  it('shows the auto title of the open chat after the first message, and "New chat" before', async () => {
+    const { sendMock } = await setup();
+    sendMock.mockResolvedValue('Reply');
+    expect(screen.getByTestId('chat_header_title')).toHaveTextContent('New chat');
+    await type('  Tell me   about volcanoes  ');
+    await tapSend();
+    await waitFor(() => expect(screen.getByText('Reply')).toBeOnTheScreen());
+    expect(screen.getByTestId('chat_header_title')).toHaveTextContent('Tell me about volcanoes');
+    await fireEvent.press(screen.getByLabelText('New chat'));
+    expect(screen.getByTestId('chat_header_title')).toHaveTextContent('New chat');
+  });
+
+  it('AC-6: the menu button calls onOpenMenu', async () => {
+    const onOpenMenu = jest.fn();
+    const store = makeStore({ sendMessage: jest.fn() }, new MemoryChatRepository());
+    await render(
+      <Provider store={store}>
+        <SafeAreaProvider initialMetrics={metrics}>
+          <ChatScreen onOpenMenu={onOpenMenu} />
+        </SafeAreaProvider>
+      </Provider>,
+    );
+    await fireEvent.press(screen.getByTestId('drawer_menu_btn'));
+    expect(onOpenMenu).toHaveBeenCalledTimes(1);
   });
 });

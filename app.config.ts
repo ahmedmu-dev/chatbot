@@ -25,6 +25,7 @@ export default function config({ config: base }: ConfigContext): ExpoConfig {
     },
     plugins: [
       ...(base.plugins ?? []),
+      'expo-sqlite',
       ['expo-build-properties', { android: { usesCleartextTraffic: cleartext } }],
     ],
   };

@@ -4,11 +4,13 @@ import { FlatList, KeyboardAvoidingView, StyleSheet, Text, View } from 'react-na
 
 import { AppHeader } from '@/components/AppHeader';
 import {
-  newChat,
   retryMessage,
+  selectActiveChat,
+  selectIsChatLoading,
   selectIsSending,
   selectMessages,
   sendMessage,
+  startNewChat,
   useAppDispatch,
   useAppSelector,
   type Message,
@@ -21,10 +23,19 @@ import { TypingIndicator } from './components/TypingIndicator';
 
 export const COPIED_TOAST_MS = 1500;
 
-export function ChatScreen() {
+const noop = () => undefined;
+
+interface ChatScreenProps {
+  /** Opens the chats drawer (☰). */
+  onOpenMenu?: () => void;
+}
+
+export function ChatScreen({ onOpenMenu }: ChatScreenProps) {
   const dispatch = useAppDispatch();
   const messages = useAppSelector(selectMessages);
   const sending = useAppSelector(selectIsSending);
+  const activeChat = useAppSelector(selectActiveChat);
+  const loading = useAppSelector(selectIsChatLoading);
   const listRef = useRef<FlatList<Message>>(null);
   const [copied, setCopied] = useState(false);
 
@@ -50,14 +61,20 @@ export function ChatScreen() {
 
   return (
     <View style={styles.container} testID="chat_screen">
-      <AppHeader onNewChat={() => dispatch(newChat())} />
+      <AppHeader
+        title={activeChat?.title ?? 'New chat'}
+        onOpenMenu={onOpenMenu ?? noop}
+        onNewChat={() => dispatch(startNewChat())}
+      />
       <KeyboardAvoidingView
         // The app is edge-to-edge on Android, so the window does not resize: pad on both platforms.
         behavior="padding"
         testID="chat_keyboard_avoider"
         style={styles.flex}
       >
-        {messages.length === 0 ? (
+        {loading ? (
+          <View style={styles.empty} testID="chat_loading" />
+        ) : messages.length === 0 ? (
           <View style={styles.empty} testID="chat_empty_state">
             <Text style={styles.placeholder}>Ask anything</Text>
           </View>

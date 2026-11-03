@@ -1,0 +1,51 @@
+appId: ${APP_ID}
+tags: [regression]
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 20000
+- runFlow:
+    file: ../subflows/send_and_wait.yaml
+    env:
+      MSG: keep this one
+- tapOn:
+    id: chat_new_chat_btn
+- runFlow:
+    file: ../subflows/send_and_wait.yaml
+    env:
+      MSG: delete this one
+- runFlow: ../subflows/open_drawer.yaml
+- longPressOn:
+    id: "drawer_chat_title_.*"
+    text: "delete this one"
+- tapOn:
+    id: drawer_menu_delete
+# AC-17: confirmation copy; Cancel changes nothing
+- assertVisible: "Delete chat?"
+- assertVisible: "This deletes \"delete this one\" and all its messages. This can't be undone."
+- tapOn:
+    id: delete_cancel_btn
+- assertVisible: "delete this one"
+# AC-18: confirm removes it; the open chat is replaced by a new empty chat
+- longPressOn:
+    id: "drawer_chat_title_.*"
+    text: "delete this one"
+- tapOn:
+    id: drawer_menu_delete
+- tapOn:
+    id: delete_confirm_btn
+- assertNotVisible: "delete this one"
+- assertVisible: "keep this one"
+# gone after restart
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 20000
+- runFlow: ../subflows/open_drawer.yaml
+- assertNotVisible: "delete this one"
+- assertVisible: "keep this one"
