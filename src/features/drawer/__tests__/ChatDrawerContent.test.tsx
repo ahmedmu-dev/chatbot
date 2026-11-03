@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
-import { Alert, type AlertButton } from 'react-native';
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -81,13 +80,13 @@ describe('AC-7: chat rows', () => {
     const b = await createChat(s, 'Second question', '# Heading\n- item');
     const rows = within(screen.getByTestId('drawer_list')).getAllByTestId(/^drawer_chat_[^_]+$/);
     expect(rows.map((r) => r.props.testID)).toEqual([`drawer_chat_${b}`, `drawer_chat_${a}`]);
-    expect(screen.getByTestId(`drawer_chat_${b}_title`)).toHaveTextContent('Second question');
-    expect(screen.getByTestId(`drawer_chat_${b}_preview`)).toHaveTextContent('Heading item');
-    expect(screen.getByTestId(`drawer_chat_${a}_preview`)).toHaveTextContent(
+    expect(screen.getByTestId(`drawer_chat_title_${b}`)).toHaveTextContent('Second question');
+    expect(screen.getByTestId(`drawer_chat_preview_${b}`)).toHaveTextContent('Heading item');
+    expect(screen.getByTestId(`drawer_chat_preview_${a}`)).toHaveTextContent(
       'Answer with bold and link',
     );
     const updatedAt = s.store.getState().chat.chats.find((c) => c.id === b)!.updatedAt;
-    expect(screen.getByTestId(`drawer_chat_${b}_time`)).toHaveTextContent(
+    expect(screen.getByTestId(`drawer_chat_time_${b}`)).toHaveTextContent(
       formatChatTime(updatedAt),
     );
   });
@@ -103,7 +102,7 @@ describe('AC-7: chat rows', () => {
     await act(async () => {
       await s.store.dispatch(loadChats());
     });
-    const time = screen.getByTestId('drawer_chat_old_time').props.children as string;
+    const time = screen.getByTestId('drawer_chat_time_old').props.children as string;
     expect(time).toContain('2026');
     expect(time).not.toContain(':');
   });
@@ -116,7 +115,7 @@ describe('AC-7: chat rows', () => {
       await s.store.dispatch(sendMessage('This one fails'));
     });
     const id = s.store.getState().chat.chats[0]!.id;
-    expect(screen.getByTestId(`drawer_chat_${id}_preview`)).toHaveTextContent('This one fails');
+    expect(screen.getByTestId(`drawer_chat_preview_${id}`)).toHaveTextContent('This one fails');
   });
 
   it('AC-11: sending in an older chat moves it to the top and updates its preview', async () => {
@@ -130,7 +129,7 @@ describe('AC-7: chat rows', () => {
     });
     const rows = within(screen.getByTestId('drawer_list')).getAllByTestId(/^drawer_chat_[^_]+$/);
     expect(rows.map((r) => r.props.testID)).toEqual([`drawer_chat_${a}`, `drawer_chat_${b}`]);
-    expect(screen.getByTestId(`drawer_chat_${a}_preview`)).toHaveTextContent('fresh reply');
+    expect(screen.getByTestId(`drawer_chat_preview_${a}`)).toHaveTextContent('fresh reply');
   });
 });
 
@@ -172,24 +171,8 @@ describe('AC-10: New chat button', () => {
 });
 
 describe('AC-15..AC-18: long-press menu, rename and delete', () => {
-  let alertSpy: jest.SpyInstance;
-  beforeEach(() => {
-    alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-  });
-
-  const lastAlert = () => {
-    const [title, message, buttons] = alertSpy.mock.calls.at(-1) as [
-      string,
-      string | undefined,
-      AlertButton[],
-    ];
-    return { title, message, buttons };
-  };
-  const choose = async (label: string) => {
-    const button = lastAlert().buttons.find((b) => b.text === label)!;
-    await act(async () => {
-      button.onPress?.();
-    });
+  const choose = async (testID: string) => {
+    await fireEvent.press(screen.getByTestId(testID));
   };
   const longPress = (id: string) => fireEvent(screen.getByTestId(`drawer_chat_${id}`), 'longPress');
   const titlesOf = (s: Awaited<ReturnType<typeof setup>>) =>
@@ -199,34 +182,36 @@ describe('AC-15..AC-18: long-press menu, rename and delete', () => {
     const s = await setup();
     const a = await createChat(s, 'Chat A');
     await longPress(a);
-    expect(lastAlert().buttons.map((b) => b.text)).toEqual(['Rename', 'Delete', 'Cancel']);
-    expect(lastAlert().buttons[1]?.style).toBe('destructive');
-    await choose('Cancel');
+    for (const label of ['Rename', 'Delete', 'Cancel']) {
+      expect(within(screen.getByTestId('drawer_menu')).getByText(label)).toBeOnTheScreen();
+    }
+    await choose('drawer_menu_cancel');
+    expect(screen.queryByTestId('drawer_menu')).not.toBeOnTheScreen();
     expect(titlesOf(s)).toEqual(['Chat A']);
   });
 
   it('AC-16: Rename opens a dialog prefilled with the title', async () => {
     const s = await setup();
     const a = await createChat(s, 'Chat A');
-    expect(screen.queryByTestId('drawer_rename_dialog')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('rename_dialog')).not.toBeOnTheScreen();
     await longPress(a);
-    await choose('Rename');
-    expect(screen.getByTestId('drawer_rename_input').props.value).toBe('Chat A');
+    await choose('drawer_menu_rename');
+    expect(screen.getByTestId('rename_input').props.value).toBe('Chat A');
   });
 
   it('AC-16: Save is disabled while the trimmed text is empty', async () => {
     const s = await setup();
     const a = await createChat(s, 'Chat A');
     await longPress(a);
-    await choose('Rename');
+    await choose('drawer_menu_rename');
     const saveDisabled = () =>
-      screen.getByTestId('drawer_rename_save_btn').props.accessibilityState.disabled;
+      screen.getByTestId('rename_save_btn').props.accessibilityState.disabled;
     expect(saveDisabled()).toBe(false);
-    await fireEvent.changeText(screen.getByTestId('drawer_rename_input'), '   ');
+    await fireEvent.changeText(screen.getByTestId('rename_input'), '   ');
     expect(saveDisabled()).toBe(true);
-    await fireEvent.press(screen.getByTestId('drawer_rename_save_btn'));
+    await fireEvent.press(screen.getByTestId('rename_save_btn'));
     expect(titlesOf(s)).toEqual(['Chat A']);
-    await fireEvent.changeText(screen.getByTestId('drawer_rename_input'), 'x');
+    await fireEvent.changeText(screen.getByTestId('rename_input'), 'x');
     expect(saveDisabled()).toBe(false);
   });
 
@@ -234,8 +219,8 @@ describe('AC-15..AC-18: long-press menu, rename and delete', () => {
     const s = await setup();
     const a = await createChat(s, 'Chat A');
     await longPress(a);
-    await choose('Rename');
-    expect(screen.getByTestId('drawer_rename_input').props.maxLength).toBe(60);
+    await choose('drawer_menu_rename');
+    expect(screen.getByTestId('rename_input').props.maxLength).toBe(60);
   });
 
   it('AC-16: Save stores the trimmed title in the list, the header source and the database', async () => {
@@ -243,13 +228,13 @@ describe('AC-15..AC-18: long-press menu, rename and delete', () => {
     const a = await createChat(s, 'Chat A');
     await createChat(s, 'Chat B');
     await longPress(a);
-    await choose('Rename');
-    await fireEvent.changeText(screen.getByTestId('drawer_rename_input'), '  Holiday plans  ');
+    await choose('drawer_menu_rename');
+    await fireEvent.changeText(screen.getByTestId('rename_input'), '  Holiday plans  ');
     await act(async () => {
-      fireEvent.press(screen.getByTestId('drawer_rename_save_btn'));
+      fireEvent.press(screen.getByTestId('rename_save_btn'));
     });
-    expect(screen.queryByTestId('drawer_rename_dialog')).not.toBeOnTheScreen();
-    expect(screen.getByTestId(`drawer_chat_${a}_title`)).toHaveTextContent('Holiday plans');
+    expect(screen.queryByTestId('rename_dialog')).not.toBeOnTheScreen();
+    expect(screen.getByTestId(`drawer_chat_title_${a}`)).toHaveTextContent('Holiday plans');
     expect(s.repo.chats.find((c) => c.id === a)?.title).toBe('Holiday plans');
     expect(titlesOf(s)).toEqual(['Chat B', 'Holiday plans']); // rename does not reorder
   });
@@ -258,10 +243,10 @@ describe('AC-15..AC-18: long-press menu, rename and delete', () => {
     const s = await setup();
     const a = await createChat(s, 'Chat A');
     await longPress(a);
-    await choose('Rename');
-    await fireEvent.changeText(screen.getByTestId('drawer_rename_input'), 'Other');
-    await fireEvent.press(screen.getByTestId('drawer_rename_cancel_btn'));
-    expect(screen.queryByTestId('drawer_rename_dialog')).not.toBeOnTheScreen();
+    await choose('drawer_menu_rename');
+    await fireEvent.changeText(screen.getByTestId('rename_input'), 'Other');
+    await fireEvent.press(screen.getByTestId('rename_cancel_btn'));
+    expect(screen.queryByTestId('rename_dialog')).not.toBeOnTheScreen();
     expect(titlesOf(s)).toEqual(['Chat A']);
     expect(s.repo.chats[0]?.title).toBe('Chat A');
   });
@@ -270,15 +255,16 @@ describe('AC-15..AC-18: long-press menu, rename and delete', () => {
     const s = await setup();
     const a = await createChat(s, 'Chat A');
     await longPress(a);
-    await choose('Delete');
-    const { title, message, buttons } = lastAlert();
-    expect(title).toBe('Delete chat?');
-    expect(message).toBe('This deletes "Chat A" and all its messages. This can\'t be undone.');
-    expect(buttons.map((b) => [b.text, b.style])).toEqual([
-      ['Cancel', 'cancel'],
-      ['Delete', 'destructive'],
-    ]);
-    await choose('Cancel');
+    await choose('drawer_menu_delete');
+    const dialog = screen.getByTestId('delete_dialog');
+    expect(within(dialog).getByText('Delete chat?')).toBeOnTheScreen();
+    expect(
+      within(dialog).getByText(
+        'This deletes "Chat A" and all its messages. This can\'t be undone.',
+      ),
+    ).toBeOnTheScreen();
+    await choose('delete_cancel_btn');
+    expect(screen.queryByTestId('delete_dialog')).not.toBeOnTheScreen();
     expect(titlesOf(s)).toEqual(['Chat A']);
     expect(s.repo.chats).toHaveLength(1);
   });
@@ -288,8 +274,8 @@ describe('AC-15..AC-18: long-press menu, rename and delete', () => {
     const a = await createChat(s, 'Chat A');
     const b = await createChat(s, 'Chat B');
     await longPress(a);
-    await choose('Delete');
-    await choose('Delete');
+    await choose('drawer_menu_delete');
+    await choose('delete_confirm_btn');
     expect(screen.queryByTestId(`drawer_chat_${a}`)).not.toBeOnTheScreen();
     expect(screen.getByTestId(`drawer_chat_${b}`)).toBeOnTheScreen();
     expect(s.repo.chats.map((c) => c.id)).toEqual([b]);
@@ -302,8 +288,8 @@ describe('AC-15..AC-18: long-press menu, rename and delete', () => {
     const a = await createChat(s, 'Chat A');
     expect(selectActiveChat(s.store.getState())?.id).toBe(a);
     await longPress(a);
-    await choose('Delete');
-    await choose('Delete');
+    await choose('drawer_menu_delete');
+    await choose('delete_confirm_btn');
     expect(selectActiveChat(s.store.getState())).toBeNull();
     expect(selectMessages(s.store.getState())).toEqual([]);
     expect(screen.getByText('No chats yet')).toBeOnTheScreen();

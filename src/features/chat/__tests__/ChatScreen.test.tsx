@@ -297,7 +297,7 @@ describe('AC-9 / AC-13: header title', () => {
         </SafeAreaProvider>
       </Provider>,
     );
-    await fireEvent.press(screen.getByTestId('chat_menu_btn'));
+    await fireEvent.press(screen.getByTestId('drawer_menu_btn'));
     expect(onOpenMenu).toHaveBeenCalledTimes(1);
   });
 });

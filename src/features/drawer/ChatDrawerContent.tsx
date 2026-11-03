@@ -1,6 +1,6 @@
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ChatSummary } from '@/db';
@@ -17,6 +17,7 @@ import {
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { ChatRow } from './components/ChatRow';
+import { ChatMenu, DeleteDialog } from './components/ChatMenu';
 import { RenameDialog } from './components/RenameDialog';
 
 /** Drawer body: the New chat button, then the saved chats, newest first. */
@@ -39,48 +40,17 @@ export function ChatDrawerContent({ navigation }: DrawerContentComponentProps) {
     [dispatch, navigation],
   );
 
+  const [menuFor, setMenuFor] = useState<ChatSummary | null>(null);
   const [renaming, setRenaming] = useState<ChatSummary | null>(null);
-
-  const confirmDelete = useCallback(
-    (chat: ChatSummary) => {
-      Alert.alert(
-        'Delete chat?',
-        `This deletes "${chat.title}" and all its messages. This can't be undone.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: () => void dispatch(deleteChat(chat.id)),
-          },
-        ],
-        { cancelable: true },
-      );
-    },
-    [dispatch],
-  );
+  const [deleting, setDeleting] = useState<ChatSummary | null>(null);
 
   /** AC-15: long-press menu. */
-  const handleLongPress = useCallback(
-    (chat: ChatSummary) => {
-      Alert.alert(
-        chat.title,
-        undefined,
-        [
-          { text: 'Rename', onPress: () => setRenaming(chat) },
-          { text: 'Delete', style: 'destructive', onPress: () => confirmDelete(chat) },
-          { text: 'Cancel', style: 'cancel' },
-        ],
-        { cancelable: true },
-      );
-    },
-    [confirmDelete],
-  );
+  const handleLongPress = useCallback((chat: ChatSummary) => setMenuFor(chat), []);
 
   return (
     <View
       style={[styles.container, { paddingTop: insets.top + spacing.m }]}
-      testID="drawer_content"
+      testID="drawer_container"
     >
       <Pressable
         onPress={handleNewChat}
@@ -113,6 +83,30 @@ export function ChatDrawerContent({ navigation }: DrawerContentComponentProps) {
           testID="drawer_list"
         />
       )}
+      {menuFor ? (
+        <ChatMenu
+          title={menuFor.title}
+          onRename={() => {
+            setRenaming(menuFor);
+            setMenuFor(null);
+          }}
+          onDelete={() => {
+            setDeleting(menuFor);
+            setMenuFor(null);
+          }}
+          onCancel={() => setMenuFor(null)}
+        />
+      ) : null}
+      {deleting ? (
+        <DeleteDialog
+          title={deleting.title}
+          onConfirm={() => {
+            void dispatch(deleteChat(deleting.id));
+            setDeleting(null);
+          }}
+          onCancel={() => setDeleting(null)}
+        />
+      ) : null}
       {renaming ? (
         <RenameDialog
           key={renaming.id}

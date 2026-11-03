@@ -26,14 +26,14 @@ export const ChatRow = memo(function ChatRow({ chat, active, onPress, onLongPres
       testID={`drawer_chat_${chat.id}`}
     >
       <View style={styles.texts}>
-        <Text style={styles.title} numberOfLines={1} testID={`drawer_chat_${chat.id}_title`}>
+        <Text style={styles.title} numberOfLines={1} testID={`drawer_chat_title_${chat.id}`}>
           {chat.title}
         </Text>
-        <Text style={styles.preview} numberOfLines={1} testID={`drawer_chat_${chat.id}_preview`}>
+        <Text style={styles.preview} numberOfLines={1} testID={`drawer_chat_preview_${chat.id}`}>
           {preview}
         </Text>
       </View>
-      <Text style={styles.time} testID={`drawer_chat_${chat.id}_time`}>
+      <Text style={styles.time} testID={`drawer_chat_time_${chat.id}`}>
         {formatChatTime(chat.updatedAt)}
       </Text>
     </Pressable>

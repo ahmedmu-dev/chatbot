@@ -20,7 +20,7 @@ export function AppHeader({ title, onOpenMenu, onNewChat }: AppHeaderProps) {
         accessibilityLabel="Open chats"
         hitSlop={8}
         style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-        testID="chat_menu_btn"
+        testID="drawer_menu_btn"
       >
         <Text style={styles.icon}>☰</Text>
       </Pressable>

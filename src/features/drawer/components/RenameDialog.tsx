@@ -27,7 +27,7 @@ export function RenameDialog({ initialTitle, onSave, onCancel }: RenameDialogPro
   return (
     <Modal transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
       <KeyboardAvoidingView behavior="padding" style={styles.backdrop}>
-        <View style={styles.dialog} testID="drawer_rename_dialog">
+        <View style={styles.dialog} testID="rename_dialog">
           <Text style={styles.heading} accessibilityRole="header">
             Rename chat
           </Text>
@@ -41,7 +41,7 @@ export function RenameDialog({ initialTitle, onSave, onCancel }: RenameDialogPro
             onSubmitEditing={() => canSave && onSave(trimmed)}
             accessibilityLabel="Chat name"
             style={styles.input}
-            testID="drawer_rename_input"
+            testID="rename_input"
           />
           <View style={styles.actions}>
             <Pressable
@@ -49,7 +49,7 @@ export function RenameDialog({ initialTitle, onSave, onCancel }: RenameDialogPro
               accessibilityRole="button"
               accessibilityLabel="Cancel"
               style={styles.action}
-              testID="drawer_rename_cancel_btn"
+              testID="rename_cancel_btn"
             >
               <Text style={styles.cancelText}>Cancel</Text>
             </Pressable>
@@ -60,7 +60,7 @@ export function RenameDialog({ initialTitle, onSave, onCancel }: RenameDialogPro
               accessibilityLabel="Save"
               accessibilityState={{ disabled: !canSave }}
               style={styles.action}
-              testID="drawer_rename_save_btn"
+              testID="rename_save_btn"
             >
               <Text style={[styles.saveText, !canSave && styles.saveDisabled]}>Save</Text>
             </Pressable>
