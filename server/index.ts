@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { AnthropicClient } from './anthropicClient';
 import { createApp } from './app';
 import { FakeClient } from './fakeClient';
+import { startServer } from './listen';
 import type { LlmClient } from './types';
 
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -21,9 +22,4 @@ function createClient(): LlmClient {
   return new AnthropicClient(key);
 }
 
-const port = Number(process.env.PORT ?? 8787);
-createApp(createClient()).listen(port, '0.0.0.0', () => {
-  console.warn(
-    `Parley proxy listening on 0.0.0.0:${port} (${process.env.LLM_PROVIDER ?? 'anthropic'})`,
-  );
-});
+startServer(createApp(createClient()));
