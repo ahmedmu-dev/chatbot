@@ -9,7 +9,7 @@ Branch `feature/S01-chat-core`. Statuses: todo · in-progress · ready-for-test 
 | DEV-3 | `ChatProvider` interface + `AnthropicProvider` (calls the proxy), `ChatError` codes and user messages, `EXPO_PUBLIC_API_URL`, abort signal | dev | AC-8, AC-9 | DEV-1 | todo |
 | DEV-4 | Redux store + chat slice: messages with status, send/retry thunks, history building (system prompt + sent messages, oldest first), New chat reset | dev | AC-16 (logic), AC-19, AC-20, AC-21, AC-22 | DEV-3 | todo |
 | DEV-5 | Chat screen UI: message list (user right / assistant left), Markdown and code blocks, input bar with Send enable rules, typing indicator, auto-scroll, long-press copy + "Copied", inline error + Retry, offline handling, keyboard avoiding | dev | AC-10 – AC-18 | DEV-4 | todo |
-| QA-1 | Test plan + testID contract | qa | all | — | todo |
+| QA-1 | Test plan + testID contract | qa | all | — | done |
 | QA-2 | Maestro flows for the core path (send / receive with `LLM_PROVIDER=fake`, follow-up context, error + Retry, New chat) | qa | AC-3, AC-10 – AC-12, AC-16, AC-19 – AC-22 | QA-1 | todo |
 | QA | Sign-off | qa | all | every DEV / QA / BUG | todo |
 | SM | Open PR | lead | — | QA Sign-off | todo |
