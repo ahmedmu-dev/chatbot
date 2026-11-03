@@ -1,0 +1,48 @@
+appId: ${APP_ID}
+tags: [regression]
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 20000
+# unique text so [fail-once] (tracked per server process) fails on the first attempt every run
+- evalScript: ${output.tag = Date.now()}
+# AC-16: a failure keeps my message, shows the error text and Retry
+- runFlow:
+    file: ../subflows/send.yaml
+    env:
+      MSG: "[fail-once:rate_limit] ${output.tag}"
+- extendedWaitUntil:
+    visible:
+      id: chat_error
+    timeout: 20000
+- assertVisible: "Too many requests. Wait a moment and try again."
+- assertVisible: "(?s).*fail-once:rate_limit.*"
+- assertVisible:
+    id: chat_retry_btn
+# AC-16: Retry re-sends the same message; error disappears and the reply shows
+- tapOn:
+    id: chat_retry_btn
+- extendedWaitUntil:
+    visible: "(?s).*You said: \\[fail-once:rate_limit\\].*"
+    timeout: 20000
+- assertNotVisible:
+    id: chat_error
+- assertNotVisible:
+    id: chat_retry_btn
+# Persistent error: [fail:] keeps failing, message is never lost
+- runFlow:
+    file: ../subflows/send.yaml
+    env:
+      MSG: "[fail:overloaded] again"
+- extendedWaitUntil:
+    visible: "The AI service is busy. Try again shortly."
+    timeout: 20000
+- tapOn:
+    id: chat_retry_btn
+- extendedWaitUntil:
+    visible: "The AI service is busy. Try again shortly."
+    timeout: 20000
+- assertVisible: "(?s).*fail:overloaded.*"

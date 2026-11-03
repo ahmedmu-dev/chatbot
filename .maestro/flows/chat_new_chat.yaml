@@ -1,0 +1,33 @@
+appId: ${APP_ID}
+tags: [regression]
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 20000
+- runFlow:
+    file: ../subflows/send.yaml
+    env:
+      MSG: old chat question
+- extendedWaitUntil:
+    visible: "(?s).*You said: old chat question.*"
+    timeout: 20000
+# AC-19: New chat clears the conversation and shows the empty state
+- tapOn:
+    id: chat_new_chat_btn
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 10000
+- assertNotVisible: "old chat question"
+# AC-22: the next request has no messages from the previous chat
+- runFlow:
+    file: ../subflows/send.yaml
+    env:
+      MSG: what did I just ask
+- extendedWaitUntil:
+    visible: "(?s).*You said: what did I just ask.*Earlier messages: none.*"
+    timeout: 20000
+- assertNotVisible: "old chat question"

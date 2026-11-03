@@ -1,0 +1,9 @@
+# Reusable: type ${MSG} into the input and tap Send.
+appId: ${APP_ID}
+---
+- tapOn:
+    id: chat_input
+- inputText: ${MSG}
+- hideKeyboard
+- tapOn:
+    id: chat_send_btn

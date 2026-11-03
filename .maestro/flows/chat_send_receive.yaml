@@ -1,0 +1,31 @@
+# Needs: LLM_PROVIDER=fake npm run server, app built with EXPO_PUBLIC_API_URL=http://<Mac LAN IP>:8787
+appId: ${APP_ID}
+tags: [regression, smoke]
+---
+- launchApp:
+    clearState: true
+# AC-3: cold start shows the chat screen with the empty state
+- extendedWaitUntil:
+    visible:
+      id: chat_empty_state
+    timeout: 20000
+- assertVisible: "Ask anything"
+- assertVisible:
+    id: chat_header_title
+# AC-11: Send is disabled while the input is empty
+- tapOn:
+    id: chat_input
+- inputText: hello parley
+- hideKeyboard
+# AC-12: my message appears and the input clears on Send
+- tapOn:
+    id: chat_send_btn
+- assertVisible: "hello parley"
+- assertNotVisible:
+    id: chat_empty_state
+# AC-5 / AC-7a / AC-10: the fake reply (assistant, left) arrives after the user message
+- extendedWaitUntil:
+    visible: "(?s).*You said: hello parley.*"
+    timeout: 20000
+- assertNotVisible:
+    id: chat_typing_indicator
