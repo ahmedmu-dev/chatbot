@@ -13,4 +13,4 @@ Branch `feature/S01-chat-core`. Statuses: todo · in-progress · ready-for-test 
 | QA-2 | Maestro flows for the core path (send / receive with `LLM_PROVIDER=fake`, follow-up context, error + Retry, New chat) | qa | AC-3, AC-10 – AC-12, AC-16, AC-19 – AC-22 | QA-1 | done |
 | BUG-1 | Android release blocks cleartext http:// to the local proxy; all flows show offline (High) | dev | AC-8, AC-10 – AC-22 (device) | — | done |
 | QA | Sign-off | qa | all | every DEV / QA / BUG (incl. BUG-1) | done (a9eeb3f) |
-| SM | Open PR | lead | — | QA Sign-off | todo |
+| SM | Open PR | lead | — | QA Sign-off | done (PR #1) |
